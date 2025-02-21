@@ -1,0 +1,106 @@
+{
+  "turmas": [
+    {
+      "id": "I1P1A",
+      "nome": "I1P1 - Turma A",
+      "qtdAlunos": 16,
+      "horarios": {
+        "segunda-feira": [
+          {
+            "inicio": "7:30",
+            "qtdAulas": 3,
+            "fim": "09:45",
+            "disciplina": "ARIOT",
+            "professor": "Flávio",
+            "local": "Lab Redes"
+          },
+          {
+            "inicio": "09:45",
+            "qtdAulas": 2,
+            "fim": "11:15",
+            "disciplina": "SOP",
+            "professor": "Carlos F.",
+            "local": "Lab Redes"
+          }
+        ]
+      }
+    },
+    {
+      "id": "I1P1B",
+      "nome": "I1P1 - Turma B",
+      "qtdAlunos": 16,
+      "horarios": {
+        "sexta-feira": [
+          {
+            "inicio": "13:00",
+            "qtdAulas": 5,
+            "fim": "16:45",
+            "disciplina": "LREQ",
+            "professor": "Bruno",
+            "local": "Sala 7"
+          }
+        ],
+        "quinta-feira": [
+          {
+            "inicio": "7:30",
+            "qtdAulas": "3",
+            "fim": "09:45",
+            "disciplina": "ARIOT",
+            "professor": "Flávio",
+            "local": "sala7"
+          },
+          {
+            "inicio": "7:30",
+            "qtdAulas": "3",
+            "fim": "09:45",
+            "disciplina": "ARIOT",
+            "professor": "Flávio",
+            "local": "sala7"
+          }
+        ],
+        "quarta-feira": [
+          {
+            "inicio": "13:00",
+            "qtdAulas": 5,
+            "fim": "16:45",
+            "disciplina": "Javascript",
+            "professor": "Bruno",
+            "local": "sala7"
+          }
+        ]
+      }
+    }
+  ],
+  "salas": [
+    {
+      "id": "ofc-inst-elet1",
+      "nome": "Oficina INSTALAÇÕES ELETRICAS 1 2025",
+      "horarios": {
+        "segunda-feira": [],
+        "terça-feira": [],
+        "quarta-feira": [],
+        "quinta-feira": [],
+        "sexta-feira": [],
+        "sábado": []
+      }
+    },
+    {
+      "id": "sala7",
+      "nome": "Sala 7",
+      "horarios": {
+        "segunda-feira": [],
+        "terça-feira": [],
+        "quarta-feira": [
+          {
+            "horario-inicio": "13:00",
+            "horario-fim": "16:45",
+            "turma": "I1P1B"
+          }
+        ],
+        "quinta-feira": [],
+        "sexta-feira": [],
+        "sábado": []
+      }
+    }
+  ]
+}
