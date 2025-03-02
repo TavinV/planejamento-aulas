@@ -6,8 +6,103 @@
     <title>Document</title>
 </head>
 <body>
-    <Button onclick="addTurmaB()">a</Button>
-    <Button onclick="criarSala7()">b</Button>
+    <h2>Criar Turma</h2>
+    <form id="form-turma-post" action="">
+        <label for="id">Id Turma:</label>
+        <input type="text" id="id" name="id" required>
+        
+        <br><br>
+
+        <label for="nome">Nome:</label>
+        <input type="text" id="nome" name="nome" required>
+        
+        <br><br>
+
+        <label for="qtd">Qtd de Alunos:</label>
+        <input type="number" id="qtd" name="qtd" required>
+        
+        <br><br>
+
+        <button>Enviar</button>
+    </form>
+    <hr>
+
+    <h2>Adicionar Horários</h2>
+    <form id="form-horarios-post">
+        <label for="id">Id Turma:</label>
+        <input type="text" id="id" name="id" required>
+        
+        <br><br>
+
+        <label for="nome">Dia:</label>
+        <select name="dia" id="">
+            <option value="segunda-feira">Segunda-feira</option>
+            <option value="terça-feira">Terça-feira</option>
+            <option value="quarta-feira">Quarta-feira</option>
+            <option value="quinta-feira">Quinta-feira</option>
+            <option value="sexta-feira">Sexta-feira</option>
+            <option value="sábado">Sábado</option>
+        </select>
+        
+        <br><br>
+
+        <label for="qtd">Qtd de Aulas:</label>
+        <input type="text" id="qtd" name="qtd-aulas" required>
+        
+        <br><br>
+        
+        <label for="qtd">Horário Inicio</label>
+        <input type="text" id="qtd" name="inicio" placeholder="7:30" required>
+        
+        <br><br>
+        
+        
+        <label for="qtd">Disciplina</label>
+        <input type="text" id="qtd" name="disciplina" required>
+        
+        <br><br>
+
+        <label for="qtd">Professor</label>
+        <input type="text" id="qtd" name="professor" required>
+        
+        <br><br>
+
+        <label for="qtd">Sala</label>
+        <select name="sala" id="select-sala">
+
+        </select>
+        
+        <br><br>
+
+        <button>Enviar</button>
+    </form>
+    <hr>
+    <h2>Excluir um Horário</h2>
+    <form id="form-horarios-excluir">
+        <label for="id">ID - turma:</label>
+        <input type="text" id="id" name="id" required>
+
+        <br><br>
+
+        <label for="nome">Dia:</label>
+        <select name="dia" id="">
+            <option value="segunda-feira">Segunda-feira</option>
+            <option value="terça-feira">Terça-feira</option>
+            <option value="quarta-feira">Quarta-feira</option>
+            <option value="quinta-feira">Quinta-feira</option>
+            <option value="sexta-feira">Sexta-feira</option>
+            <option value="sábado">Sábado</option>
+        </select>
+
+        <br><br>
+
+        <label for="inicio">Horario Inicio:</label>
+        <input type="text" id="inicio" name="inicio" placeholder="7:30">
+
+        <br><br>
+
+        <button>Enviar</button>
+    </form>
     <script src="Turmas.js"></script>
 </body>
 </html>
