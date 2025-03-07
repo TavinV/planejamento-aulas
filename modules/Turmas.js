@@ -2,6 +2,24 @@ const API_BASE_URL = `http://localhost:3000`
 const TURMAS_URL = API_BASE_URL + "/turmas"
 const SALAS_URL = API_BASE_URL + "/salas"
 
+const converterParaMinutos = (horario) => {
+    const [horas, minutos] = horario.split(':').map(Number);
+    return horas * 60 + minutos;
+};
+
+const calcularHorarioFim = (horarioInicio, qtdAulas) => {
+    const [hora, minuto] = horarioInicio.split(":").map(Number);
+    const duracaoTotal = qtdAulas * 45; // Tempo total em minutos
+
+    // Soma os minutos ao horário de início
+    let minutosFinais = minuto + duracaoTotal;
+    let horasFinais = hora + Math.floor(minutosFinais / 60);
+    minutosFinais = minutosFinais % 60;
+
+    // Formata o horário final como HH:MM
+    const horarioFim = `${String(horasFinais).padStart(2, "0")}:${String(minutosFinais).padStart(2, "0")}`;
+    return horarioFim;
+}
 
 class Sala {
     static async getSala(id) {
@@ -37,15 +55,31 @@ class Sala {
         }
     }
 
-    static async adicionarHorario(idSala, dia, inicio, fim, qtdAulas, idTurma) {
+    static async adicionarHorario(idSala, dia, inicio, qtdAulas, idTurma) {
         const sala = await this.getSala(idSala);
         if (!sala) return;
 
         if (!sala.horarios[dia]) sala.horarios[dia] = [];
-        sala.horarios[dia].push({ inicio, fim, qtdAulas, turma: idTurma });
+
+        let [hora, minuto] = inicio.split(':').map(Number);
+        for (let i = 0; i < qtdAulas; i++) {
+            let fimMinuto = minuto + 45;
+            let fimHora = hora + Math.floor(fimMinuto / 60);
+            fimMinuto %= 60;
+
+            sala.horarios[dia].push({
+                inicio: `${hora}:${minuto.toString().padStart(2, '0')}`,
+                fim: `${fimHora}:${fimMinuto.toString().padStart(2, '0')}`,
+                turma: idTurma
+            });
+
+            hora = fimHora;
+            minuto = fimMinuto;
+        }
 
         await this.atualizarSala(idSala, sala);
     }
+
 
     static async excluirHorario(idSala, dia, inicio) {
         const sala = await this.getSala(idSala);
@@ -79,12 +113,16 @@ class Sala {
 }
 
 class Turma {
-    static async criarTurma(id, nome, qtdAlunos) {
+    static async criarTurma(id, nome, qtdAlunos, horarioAlmoco) {
         try {
+            const turmaDuplicada = await this.getTurma(id)
+            if (turmaDuplicada) { console.error(`A turma ${id} já existe.`); return [false, `A turma ${id} já existe.`]; }
+
+
             await fetch(TURMAS_URL, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id, nome, qtdAlunos, horarios: {} }),
+                body: JSON.stringify({ id, nome, qtdAlunos, horarioAlmoco, horarios: {} }),
             });
             console.log(`Turma ${this.id} criada com sucesso!`);
         } catch (error) {
@@ -125,50 +163,76 @@ class Turma {
         }
     }
 
+    static async deletarTurma(id) {
+        try {
+            await fetch(`${TURMAS_URL}/${id}`, { method: "DELETE", })
+        } catch (error) {
+            console.error("Erro ao apagar turma:", error);
+
+        }
+    }
+
     static async adicionarHorario(idTurma, dia, inicio, qtdAulas, disciplina, professor, local) {
+        // Calcula horário de término
+        const horarioFim = calcularHorarioFim(inicio, qtdAulas);
+
+        // Obtém a turma
         const turma = await this.getTurma(idTurma);
-        if (!turma) return;
+        if (!turma) return [false, `Turma ${idTurma} não encontrada`];
 
         if (!turma.horarios[dia]) turma.horarios[dia] = [];
 
-        // Verifica se a sala está disponível
-        const sala = await Sala.getSala(local);
-        if (sala.horarios[dia]?.some(horario => horario.inicio === inicio)) {
-            console.error(`Sala ${local} já está ocupada nesse horário.`);
-            return;
+        // Converte horários para minutos para facilitar comparação
+        const inicioNovo = converterParaMinutos(inicio);
+        const fimNovo = converterParaMinutos(horarioFim);
+
+        // Verifica se há sobreposição com os horários já cadastrados na turma
+        const conflitoTurma = turma.horarios[dia].some(({ inicio, fim }) => {
+            const inicioExistente = converterParaMinutos(inicio);
+            const fimExistente = converterParaMinutos(fim);
+
+            return (inicioNovo < fimExistente && fimNovo > inicioExistente);
+        });
+
+        if (conflitoTurma) {
+            console.error(`A turma já tem uma aula nesse horário.`);
+            return [false, `A turma já tem uma aula nesse horário.`];
         }
 
-        // Calcula horário de término
-        const horarioFim = this.calcularHorarioFim(inicio, qtdAulas);
+        // Verifica se a sala está disponível
+        const sala = await Sala.getSala(local);
+
+        const conflitoSala = sala.horarios[dia]?.some(({ inicio, fim }) => {
+            const inicioExistente = converterParaMinutos(inicio);
+            const fimExistente = converterParaMinutos(fim);
+
+            return (inicioNovo < fimExistente && fimNovo > inicioExistente);
+        });
+
+        if (conflitoSala) {
+            console.error(`Sala ${local} já está ocupada nesse período.`);
+            return [false, `Sala ${local} já está ocupada nesse período.`];
+        }
 
         // Cria o novo horário
-        const novoHorario = { inicio, fim: horarioFim, qtdAulas, disciplina, professor, local };
+        const calcularPeriodo = h => (h < '12:00') ? 'manhã' : (h < '19:00') ? 'tarde' : 'noite';
+        const periodo = calcularPeriodo(inicio)
+        const novoHorario = { periodo, inicio, fim: horarioFim, qtdAulas, disciplina, professor, local };
         turma.horarios[dia].push(novoHorario);
 
         await this.atualizarTurma(idTurma, turma);
         await Sala.adicionarHorario(local, dia, inicio, horarioFim, qtdAulas, idTurma);
-    }
 
-    // Função auxiliar para calcular o horário de fim
-    static calcularHorarioFim(horarioInicio, qtdAulas) {
-        const [hora, minuto] = horarioInicio.split(":").map(Number);
-        const duracaoTotal = qtdAulas * 45; // Tempo total em minutos
-
-        // Soma os minutos ao horário de início
-        let minutosFinais = minuto + duracaoTotal;
-        let horasFinais = hora + Math.floor(minutosFinais / 60);
-        minutosFinais = minutosFinais % 60;
-
-        // Formata o horário final como HH:MM
-        const horarioFim = `${String(horasFinais).padStart(2, "0")}:${String(minutosFinais).padStart(2, "0")}`;
-        return horarioFim;
+        return [true, `Horário adicionado com sucesso.`];
     }
 
     static async excluirHorario(idTurma, dia, inicio) {
         const turma = await this.getTurma(idTurma);
-        if (!turma || !turma.horarios[dia]) return;
+        if (!turma || !turma.horarios[dia]) return [false, `Turma ${idTurma} não encontrada`];
 
         const horarioExcluir = turma.horarios[dia].find(h => h.inicio == inicio);
+        if (!horarioExcluir) return [false, `Horário ${inicio} não encontrado`];
+
         const salaDesocupar = horarioExcluir.local
 
         turma.horarios[dia] = turma.horarios[dia].filter(h => h.inicio !== inicio);
@@ -180,10 +244,10 @@ class Turma {
 
     static async alterarHorario(idTurma, dia, novosDados) {
         const turma = await this.getTurma(idTurma);
-        if (!turma || !turma.horarios[dia]) return;
+        if (!turma || !turma.horarios[dia]) return [false, `Turma ${idTurma} não encontrada`];
 
         const horario = turma.horarios[dia].find(h => h.inicio === novosDados.inicio || h.inicio === novosDados.antigoInicio);
-        if (!horario) return;
+        if (!horario) return [false, `Horário não encontrado`];
 
         Object.assign(horario, novosDados);
         await this.atualizarTurma(idTurma, turma);
@@ -191,13 +255,9 @@ class Turma {
     }
 }
 
-
-
-
-
 // Criando todas as salas
 
-async function criarSalas() {
+export async function criarSalas() {
     const salas = [
         new Sala('ofic-eletricas-1-2025', 'Oficina INSTALAÇÕES ELETRICAS 1 2025'),
         new Sala('ofic-eletricas-2-2025', 'Oficina INSTALAÇÕES ELETRICAS 2 2025'),
@@ -235,65 +295,4 @@ async function criarSalas() {
     salas.forEach(sala => sala.salvarNoBanco());
 }
 
-
-// Criando uma turma
-const formCriar = document.getElementById('form-turma-post');
-
-formCriar.addEventListener('submit', (e) => {
-    e.preventDefault();
-
-    const formData = new FormData(formCriar);
-    const id = formData.get("id").trim();
-    const nome = formData.get("nome").trim();
-    const qtd = parseInt(formData.get("qtd").trim());
-
-    // Criando a turma
-    Turma.criarTurma(id, nome, qtd);
-});
-
-
-//Adicionar horários / aulas a uma turma.
-// Carregando as options do select
-const selectSala = document.getElementById('select-sala');
-
-(async () => {
-    const salas = await Sala.getSalas()
-    for (let i = 0; i < salas.length; i++) {
-        const option = document.createElement('option');
-        option.value = salas[i].id;
-        option.text = salas[i].nome;
-        selectSala.appendChild(option);
-    }
-})()
-
-
-const formHorarios = document.getElementById("form-horarios-post")
-formHorarios.addEventListener('submit', async (e) => {
-    e.preventDefault()
-    const formData = new FormData(formHorarios)
-    const turmaId = formData.get("id").trim()
-    const dia = formData.get("dia").trim()
-    const qtdAulas = formData.get("qtd-aulas").trim()
-    const horarioInicio = formData.get("inicio").trim()
-    const disciplina = formData.get("disciplina").trim()
-    const professor = formData.get("professor").trim()
-    const sala = formData.get("sala").trim()
-
-    await Turma.adicionarHorario(turmaId, dia, horarioInicio, qtdAulas, disciplina, professor, sala)
-
-})
-
-
-// Excluindo um horário
-const formExcluir = document.getElementById("form-horarios-excluir");
-formExcluir.addEventListener('submit', async (e) => {
-    e.preventDefault()
-
-    const formData = new FormData(formExcluir)
-
-    const turmaId = formData.get("id").trim()
-    const dia = formData.get("dia").trim()
-    const horarioInicio = formData.get("inicio").trim()
-
-    await Turma.excluirHorario(turmaId, dia, horarioInicio)
-})
+export { Turma, Sala };

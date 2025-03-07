@@ -1,29 +1,5 @@
 {
-  "turmas": [
-    {
-      "id": "I1PB",
-      "nome": "Técnico em Desenvolvimento de Sistemas",
-      "qtdAlunos": 32,
-      "horarios": {
-        "segunda-feira": [
-          {
-            "inicio": "7:30",
-            "fim": "11:15",
-            "qtdAulas": "5",
-            "disciplina": "LOPAL",
-            "professor": "Ismael",
-            "local": "lab-redes-2025"
-          }
-        ]
-      }
-    },
-    {
-      "id": "I2MC",
-      "nome": "Técnico em Mecatronica",
-      "qtdAlunos": 32,
-      "horarios": {}
-    }
-  ],
+  "turmas": [],
   "salas": [
     {
       "id": "ofic-eletricas-1-2025",
@@ -341,14 +317,7 @@
       "id": "lab-redes-2025",
       "nome": "LABORATÓRIO REDES 2025",
       "horarios": {
-        "segunda-feira": [
-          {
-            "inicio": "7:30",
-            "fim": "11:15",
-            "qtdAulas": "5",
-            "turma": "I1PB"
-          }
-        ],
+        "segunda-feira": [],
         "terça-feira": [],
         "quarta-feira": [],
         "quinta-feira": [],
